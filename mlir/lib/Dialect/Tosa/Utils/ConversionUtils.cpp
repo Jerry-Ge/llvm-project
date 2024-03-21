@@ -88,9 +88,9 @@ computeReshapeOutput(ArrayRef<int64_t> higherRankShape,
     higherRankDim = higherRankShape[i];
     lowerRankDim = lowerRankShape[j];
 
-    if (lowerRankDim == 1 && higherRankDim > 1)
+    if (lowerRankDim == 1 && higherRankDim != 1)
       reshapeOutputShape[i] = 1;
-    else if ((lowerRankDim > 1 && higherRankDim == 1) ||
+    else if ((lowerRankDim != 1 && higherRankDim == 1) ||
              (lowerRankDim == higherRankDim))
       reshapeOutputShape[i] = lowerRankDim;
     else if (higherRankDim != lowerRankDim)
