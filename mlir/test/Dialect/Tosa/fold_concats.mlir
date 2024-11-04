@@ -91,3 +91,16 @@ func.func @partially_foldable(%arg0: tensor<1x1x8x8xf32>, %arg1: tensor<1x2x4x8x
 // CHECK:           %[[VAL_3:.*]] = tosa.concat %[[VAL_0]], %[[VAL_0]], %[[VAL_2]] {axis = 1 : i32} : (tensor<1x1x8x8xf32>, tensor<1x1x8x8xf32>, tensor<1x2x8x8xf32>) -> tensor<1x4x8x8xf32>
 // CHECK:           return %[[VAL_3]] : tensor<1x4x8x8xf32>
 // CHECK:         }
+
+// -----
+
+// CHECK-LABEL: test_fold_small_const_concat
+func.func @test_fold_small_const_concat() -> tensor<6xi8> {
+  // CHECK-DAG: %[[VAL_0:.*]] = "tosa.const"() <{value = dense<[1, 2, 3, 4, 5, 6]> : tensor<6xi8>}> : () -> tensor<6xi8>
+  // CHECK: return %[[VAL_0]] : tensor<6xi8>
+  %0 = "tosa.const"() <{value = dense<[1, 2]> : tensor<2xi8>}> : () -> tensor<2xi8>
+  %1 = "tosa.const"() <{value = dense<[3, 4, 5]> : tensor<3xi8>}> : () -> tensor<3xi8>
+  %2 = "tosa.const"() <{value = dense<6> : tensor<1xi8>}> : () -> tensor<1xi8>
+  %3 = "tosa.concat"(%0, %1, %2) <{axis = 0 : i32}> : (tensor<2xi8>, tensor<3xi8>, tensor<1xi8>) -> tensor<6xi8>
+  func.return %3 : tensor<6xi8>
+}
