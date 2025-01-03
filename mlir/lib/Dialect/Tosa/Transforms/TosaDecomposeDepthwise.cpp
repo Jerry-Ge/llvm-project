@@ -127,7 +127,7 @@ struct DepthwiseConv2DIsMul : public OpRewritePattern<tosa::DepthwiseConv2DOp> {
 
       Value padSizeVal = getTosaConstShape(rewriter, op->getLoc(), pad);
 
-      auto padTy = RankedTensorType::get({}, inputETy);
+      auto padTy = RankedTensorType::get({1}, inputETy);
       auto padAttr = DenseElementsAttr::get(padTy, zeroAttr);
       Value padVal =
           rewriter.create<tosa::ConstOp>(op->getLoc(), padTy, padAttr);
@@ -148,15 +148,16 @@ struct DepthwiseConv2DIsMul : public OpRewritePattern<tosa::DepthwiseConv2DOp> {
       return failure();
     }
 
-    auto shiftElementType = IntegerType::get(rewriter.getContext(), 8);
-    auto shiftType = RankedTensorType::get({1}, shiftElementType);
-    auto shiftZeroAttr = DenseElementsAttr::get(
-        shiftType, rewriter.getIntegerAttr(shiftElementType, 0));
-    Value constZero =
-        rewriter.create<tosa::ConstOp>(op.getLoc(), shiftType, shiftZeroAttr);
+    auto const_type = RankedTensorType::get({1}, rewriter.getIntegerType(8));
+    auto const_attr = DenseElementsAttr::get(
+        const_type, rewriter.getZeroAttr(rewriter.getIntegerType(8)));
+    auto zero_shift =
+        rewriter.create<tosa::ConstOp>(op.getLoc(), const_type, const_attr)
+            .getResult();
+
     Value mulValue = rewriter
                          .create<tosa::MulOp>(op.getLoc(), mulShapeType, input,
-                                              weight, constZero)
+                                              weight, zero_shift)
                          .getResult();
 
     // Reshape output to [N, H, W, C * M].
